@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <!-- Главная страница -->
+    <url>
+        <loc>https://partner.eventomir.ru/</loc>
+        <lastmod>2024-08-19</lastmod> <!-- ЗАМЕНИТЬ НА ДАТУ ПОСЛЕДНЕГО ИЗМЕНЕНИЯ -->
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <!-- Страница поиска -->
+    <url>
+        <loc>https://eventomir.ru/search</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <!-- Страница блога -->
+    <url>
+        <loc>https://eventomir.ru/blog</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <!-- Страница "О нас" -->
+    <url>
+        <loc>https://eventomir.ru/about</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <!-- Страницы регистрации/входа -->
+    <url>
+        <loc>https://eventomir.ru/login</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://eventomir.ru/register-customer</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://eventomir.ru/register-performer</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <!-- Юридические документы (основная страница) -->
+     <url>
+        <loc>https://eventomir.ru/documents</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.4</priority>
+    </url>
+    <!-- Конкретные юридические документы -->
+     <url>
+        <loc>https://eventomir.ru/privacy-policy</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>https://eventomir.ru/terms-of-service</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>https://eventomir.ru/cookie-policy</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>https://eventomir.ru/offer-agreement</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    <!-- Страницы результатов для категорий -->
+    <url>
+        <loc>https://eventomir.ru/restaurants</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://eventomir.ru/transport-results</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://eventomir.ru/cook-results</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <!-- Страница артистов -->
+    <url>
+        <loc>https://eventomir.ru/artists</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <!-- Страницы профилей (нужно генерировать динамически) -->
+    <url>
+        <loc>https://eventomir.ru/performer-profile</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://eventomir.ru/customer-profile</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://eventomir.ru/favorites</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <url>
+        <loc>https://eventomir.ru/compare</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.5</priority>
+    </url>
+     <url>
+        <loc>https://eventomir.ru/create-request</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://eventomir.ru/notifications</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.4</priority>
+    </url>
+     <url>
+        <loc>https://eventomir.ru/forgot-password</loc>
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.4</priority>
+    </url>
+     <url>
+        <loc>https://eventomir.ru/reset-password</loc> <!-- Доступ по токену, но страница существует -->
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>never</changefreq>
+        <priority>0.1</priority>
+    </url>
+     <url>
+        <loc>https://eventomir.ru/verify-email</loc> <!-- Доступ по токену, но страница существует -->
+        <lastmod>2024-08-19</lastmod>
+        <changefreq>never</changefreq>
+        <priority>0.1</priority>
+    </url>
+
+    <!-- TODO: Динамически генерировать URL для конкретных профилей исполнителей и статей блога -->
+    <!-- Пример для профиля исполнителя -->
+    <!--
+    <url>
+        <loc>https://eventomir.ru/performer-profile?id=perf123</loc>
+        <lastmod>...</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    -->
+    <!-- Пример для статьи блога -->
+    <!--
+    <url>
+        <loc>https://eventomir.ru/blog/article-slug</loc>
+        <lastmod>...</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    -->
+
+</urlset>

@@ -1,0 +1,15 @@
+# Allow all robots to index the site
+# Разрешить всем роботам индексировать сайт
+User-agent: *
+Allow: /
+
+# Disallow indexing of specific files or directories
+# Запретить индексацию специфичных файлов или директорий
+Disallow: /admin # Disallow indexing of the admin panel // Запретить индексацию админ-панели
+Disallow: /api/ # Example: disallow indexing of API endpoints (if any) // Пример: запретить индексацию API эндпоинтов (если будут)
+Disallow: /verify-email/ # Disallow indexing of verification pages (token-dependent) // Запретить индексацию страниц верификации (зависят от токена)
+Disallow: /reset-password/ # Disallow indexing of password reset pages (token-dependent) // Запретить индексацию страниц сброса пароля (зависят от токена)
+
+# Specify the path to the sitemap
+# Указать путь к карте сайта
+Sitemap: https://partner.eventomir.ru/sitemap.xml
