@@ -52,6 +52,7 @@ lerna-debug.log*
 .turbo
 /src/generated
 generated
+public/firebase-messaging-sw.js
 public/sw.js*
 public/swe-worker-5c72df51bb1f6ee0.js*
 public/workbox-f1770938.js
