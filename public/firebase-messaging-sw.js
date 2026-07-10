@@ -7,13 +7,12 @@ importScripts(
 
 // 1. Initialize Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyAEFVxhBdqjvecjA_aj5TAD8lI30NPFglU",
-  authDomain: "zepo-c03d7.firebaseapp.com",
-  projectId: "zepo-c03d7",
-  storageBucket: "zepo-c03d7.firebasestorage.app",
-  messagingSenderId: "465436463784",
-  appId: "1:465436463784:web:d663dcaf80d8a84d29289d",
-  measurementId: "G-5NCKNW2SR4",
+  apiKey: "AIzaSyBxj0FyNAZIWIFwB_Iy06cY_AkdgncIKQU",
+  authDomain: "eventomir-ru.firebaseapp.com",
+  projectId: "eventomir-ru",
+  storageBucket: "eventomir-ru.firebasestorage.app",
+  messagingSenderId: "138150550263",
+  appId: "1:138150550263:web:1dbf81b03efbc11f2f51f2",
 };
 
 firebase.initializeApp(firebaseConfig);
