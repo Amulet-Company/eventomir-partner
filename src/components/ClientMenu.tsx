@@ -23,6 +23,7 @@ import {
   LayoutDashboard,
   X,
   LogIn,
+  Users,
 } from "lucide-react";
 
 interface ClientMenuProps {
@@ -303,6 +304,18 @@ const ClientMenu: React.FC<ClientMenuProps> = ({
                 </Link>
               </DropdownMenuItem>
             )}
+
+            <DropdownMenuItem
+              asChild
+              className="cursor-pointer p-2 rounded-xl focus:bg-muted font-medium"
+            >
+              <Link href="/referrals">
+                <div className="p-1.5 bg-primary/10 rounded-md mr-3">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
+                Рекомендации
+              </Link>
+            </DropdownMenuItem>
 
             <DropdownMenuItem
               asChild

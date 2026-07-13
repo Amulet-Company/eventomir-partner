@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { QRCodeSVG } from "qrcode.react";
+import html2canvas from "html2canvas";
 import * as z from "zod";
 import {
   Copy,
@@ -58,7 +60,10 @@ import { usePartnerProfile, useUpdatePartnerProfile } from "@/services/partner";
 // --- VALIDATION SCHEMA ---
 const profileSchema = z.object({
   name: z.string().min(2, "Имя должно содержать минимум 2 символа"),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .min(1, "Телефон обязателен для заполнения")
+    .regex(/^\+7 \d{3} \d{3} \d{2}-\d{2}$/, "Введите полный номер телефона"),
   companyName: z.string().optional(),
   description: z.string().optional(),
   city: z.string().optional(),
@@ -135,10 +140,31 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+// ==========================================
+// PHONE MASK HELPER
+// ==========================================
+const formatPhoneMask = (value: string) => {
+  let cleaned = value.replace(/\D/g, "");
+  if (cleaned.startsWith("7") || cleaned.startsWith("8")) {
+    cleaned = cleaned.slice(1);
+  }
+  if (cleaned.length === 0) return "";
+
+  cleaned = cleaned.slice(0, 10);
+  let res = "+7";
+  if (cleaned.length > 0) res += " " + cleaned.substring(0, 3);
+  if (cleaned.length > 3) res += " " + cleaned.substring(3, 6);
+  if (cleaned.length > 6) res += " " + cleaned.substring(6, 8);
+  if (cleaned.length > 8) res += "-" + cleaned.substring(8, 10);
+
+  return res;
+};
+
 export default function PartnerProfilePage() {
   const { data: session, update: updateSession } = useSession();
   const { toast } = useToast();
   const userId = session?.user?.id;
+  const posterRef = useRef<HTMLDivElement>(null);
 
   const mainAppUrl =
     process.env.NEXT_PUBLIC_WEB_APP_URL || "https://app.eventomir.ru";
@@ -179,7 +205,7 @@ export default function PartnerProfilePage() {
     if (profile) {
       form.reset({
         name: profile.name || "",
-        phone: profile.phone || "",
+        phone: profile.phone ? formatPhoneMask(profile.phone) : "",
         companyName: profile.companyName || "",
         description: profile.description || "",
         city: profile.city || "",
@@ -211,6 +237,37 @@ export default function PartnerProfilePage() {
       setAvatarUrl(profile.image);
     }
   }, [profile, form]);
+
+  // Function to handle the poster download
+  const handleDownloadPoster = async () => {
+    if (!posterRef.current) return;
+
+    try {
+      const canvas = await html2canvas(posterRef.current, {
+        scale: 3, // High resolution for printing
+        useCORS: true, // Allows loading external background images from Unsplash
+        backgroundColor: "#0f172a", // Matches slate-900 fallback
+      });
+
+      const image = canvas.toDataURL("image/jpeg", 0.9);
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = "Eventomir_Referral_Poster.jpg";
+      link.click();
+
+      toast({
+        title: "Успешно",
+        description: "Постер начал скачиваться.",
+      });
+    } catch (error) {
+      console.error("Error generating poster:", error);
+      toast({
+        variant: "destructive",
+        title: "Ошибка",
+        description: "Не удалось создать изображение постера.",
+      });
+    }
+  };
 
   // --- IMMEDIATE AVATAR UPLOAD ---
   const handleImmediateAvatarChange = (
@@ -405,16 +462,22 @@ export default function PartnerProfilePage() {
                             Контактное лицо{" "}
                             <span className="text-red-500">*</span>
                           </FormLabel>
-                          <FormControl>
-                            <EditableInput
-                              placeholder="Иван Иванов"
-                              field={field}
-                            />
-                          </FormControl>
+                          <div className="relative group">
+                            <User className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                            <FormControl>
+                              <Input
+                                placeholder="Иван Иванов"
+                                className="pl-9 pr-10 h-11 bg-slate-50/50 hover:bg-slate-100/50 focus:bg-white transition-all border-slate-200 shadow-sm"
+                                {...field}
+                              />
+                            </FormControl>
+                            <Pencil className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-3.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                          </div>
                           <FormMessage className="text-xs text-red-500" />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="phone"
@@ -426,9 +489,16 @@ export default function PartnerProfilePage() {
                           <div className="relative group">
                             <Phone className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
                             <Input
-                              placeholder="+7 (999) 000-00-00"
-                              className="pl-9 pr-10 h-11 bg-slate-50/50 hover:bg-slate-100/50 focus:bg-white transition-all border-slate-200 shadow-sm"
                               {...field}
+                              onChange={(e) => {
+                                const formatted = formatPhoneMask(
+                                  e.target.value,
+                                );
+                                field.onChange(formatted);
+                              }}
+                              className="pl-9 pr-10 h-11 bg-slate-50/50 hover:bg-slate-100/50 focus:bg-white transition-all border-slate-200 shadow-sm"
+                              placeholder="+7 ___ ___ __-__"
+                              maxLength={16}
                             />
                             <Pencil className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-3.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                           </div>
@@ -506,10 +576,15 @@ export default function PartnerProfilePage() {
                             Основной Веб-сайт
                           </FormLabel>
                           <FormControl>
-                            <EditableInput
-                              placeholder="https://вашлаэндинг.ру"
-                              field={field}
-                            />
+                            <div className="relative group">
+                              <Input
+                                placeholder="https://вашлаэндинг.ру"
+                                className="pr-10 h-11 bg-slate-50/50 hover:bg-slate-100/50 focus:bg-white transition-all border-slate-200 shadow-sm"
+                                {...field}
+                                value={field.value || ""}
+                              />
+                              <Pencil className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-3.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            </div>
                           </FormControl>
                           <FormMessage className="text-xs text-red-500" />
                         </FormItem>
@@ -528,15 +603,21 @@ export default function PartnerProfilePage() {
                             Instagram
                           </FormLabel>
                           <FormControl>
-                            <EditableInput
-                              placeholder="https://instagram.com/..."
-                              field={field}
-                            />
+                            <div className="relative group">
+                              <Input
+                                placeholder="https://instagram.com/..."
+                                className="pr-10 h-11 bg-slate-50/50 hover:bg-slate-100/50 focus:bg-white transition-all border-slate-200 shadow-sm"
+                                {...field}
+                                value={field.value || ""}
+                              />
+                              <Pencil className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-3.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            </div>
                           </FormControl>
                           <FormMessage className="text-xs text-red-500" />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="socialLinks.telegram"
@@ -546,15 +627,21 @@ export default function PartnerProfilePage() {
                             <Send className="w-4 h-4 text-sky-500" /> Telegram
                           </FormLabel>
                           <FormControl>
-                            <EditableInput
-                              placeholder="t.me/..."
-                              field={field}
-                            />
+                            <div className="relative group">
+                              <Input
+                                placeholder="t.me/..."
+                                className="pr-10 h-11 bg-slate-50/50 hover:bg-slate-100/50 focus:bg-white transition-all border-slate-200 shadow-sm"
+                                {...field}
+                                value={field.value || ""}
+                              />
+                              <Pencil className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-3.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            </div>
                           </FormControl>
                           <FormMessage className="text-xs text-red-500" />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="socialLinks.youtube"
@@ -564,15 +651,21 @@ export default function PartnerProfilePage() {
                             <Youtube className="w-4 h-4 text-red-600" /> YouTube
                           </FormLabel>
                           <FormControl>
-                            <EditableInput
-                              placeholder="https://youtube.com/c/..."
-                              field={field}
-                            />
+                            <div className="relative group">
+                              <Input
+                                placeholder="https://youtube.com/c/..."
+                                className="pr-10 h-11 bg-slate-50/50 hover:bg-slate-100/50 focus:bg-white transition-all border-slate-200 shadow-sm"
+                                {...field}
+                                value={field.value || ""}
+                              />
+                              <Pencil className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-3.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            </div>
                           </FormControl>
                           <FormMessage className="text-xs text-red-500" />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="socialLinks.vk"
@@ -585,15 +678,21 @@ export default function PartnerProfilePage() {
                             ВКонтакте
                           </FormLabel>
                           <FormControl>
-                            <EditableInput
-                              placeholder="https://vk.com/..."
-                              field={field}
-                            />
+                            <div className="relative group">
+                              <Input
+                                placeholder="https://vk.com/..."
+                                className="pr-10 h-11 bg-slate-50/50 hover:bg-slate-100/50 focus:bg-white transition-all border-slate-200 shadow-sm"
+                                {...field}
+                                value={field.value || ""}
+                              />
+                              <Pencil className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-3.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            </div>
                           </FormControl>
                           <FormMessage className="text-xs text-red-500" />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="socialLinks.facebook"
@@ -604,15 +703,21 @@ export default function PartnerProfilePage() {
                             Facebook
                           </FormLabel>
                           <FormControl>
-                            <EditableInput
-                              placeholder="https://facebook.com/..."
-                              field={field}
-                            />
+                            <div className="relative group">
+                              <Input
+                                placeholder="https://facebook.com/..."
+                                className="pr-10 h-11 bg-slate-50/50 hover:bg-slate-100/50 focus:bg-white transition-all border-slate-200 shadow-sm"
+                                {...field}
+                                value={field.value || ""}
+                              />
+                              <Pencil className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-3.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            </div>
                           </FormControl>
                           <FormMessage className="text-xs text-red-500" />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="socialLinks.tiktok"
@@ -622,15 +727,21 @@ export default function PartnerProfilePage() {
                             <Music2 className="w-4 h-4 text-slate-800" /> TikTok
                           </FormLabel>
                           <FormControl>
-                            <EditableInput
-                              placeholder="https://tiktok.com/@..."
-                              field={field}
-                            />
+                            <div className="relative group">
+                              <Input
+                                placeholder="https://tiktok.com/@..."
+                                className="pr-10 h-11 bg-slate-50/50 hover:bg-slate-100/50 focus:bg-white transition-all border-slate-200 shadow-sm"
+                                {...field}
+                                value={field.value || ""}
+                              />
+                              <Pencil className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-3.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            </div>
                           </FormControl>
                           <FormMessage className="text-xs text-red-500" />
                         </FormItem>
                       )}
                     />
+
                     <FormField
                       control={form.control}
                       name="socialLinks.twitter"
@@ -641,10 +752,15 @@ export default function PartnerProfilePage() {
                             / X
                           </FormLabel>
                           <FormControl>
-                            <EditableInput
-                              placeholder="https://twitter.com/..."
-                              field={field}
-                            />
+                            <div className="relative group">
+                              <Input
+                                placeholder="https://twitter.com/..."
+                                className="pr-10 h-11 bg-slate-50/50 hover:bg-slate-100/50 focus:bg-white transition-all border-slate-200 shadow-sm"
+                                {...field}
+                                value={field.value || ""}
+                              />
+                              <Pencil className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-3.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                            </div>
                           </FormControl>
                           <FormMessage className="text-xs text-red-500" />
                         </FormItem>
@@ -882,6 +998,7 @@ export default function PartnerProfilePage() {
 
             {/* ======================= TAB 3: PROMO ======================= */}
             <TabsContent value="promo" className="space-y-6">
+              {/* Referral Link Box */}
               <Card className="border-emerald-200 shadow-sm overflow-hidden bg-gradient-to-br from-emerald-50 to-white">
                 <CardHeader className="border-b border-emerald-100/50 p-4 md:p-6 pb-4 md:pb-6">
                   <CardTitle className="text-emerald-800 text-lg md:text-xl">
@@ -918,61 +1035,157 @@ export default function PartnerProfilePage() {
                 </CardContent>
               </Card>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
-                <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                  <CardHeader className="p-4 md:p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
+                {/* 🚨 NEW: Elegant Interactive Poster */}
+                <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                  <CardHeader className="p-4 md:p-6 pb-2">
                     <CardTitle className="text-base md:text-lg">
-                      Креативы для Stories (VK / IG)
+                      Печатный постер с QR-кодом
                     </CardTitle>
                     <CardDescription className="text-xs md:text-sm mt-1">
-                      Специально подготовленные форматы 9:16.
+                      Идеально для размещения в гримерках, студиях или отправки
+                      в PDF. QR-код уже содержит вашу уникальную ссылку.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
-                    <div className="aspect-[9/16] bg-slate-100 rounded-xl flex items-center justify-center mb-4 md:mb-6 border-2 border-dashed border-slate-300 relative overflow-hidden group">
-                      <span className="text-slate-400 font-medium z-10 flex flex-col items-center text-sm md:text-base">
-                        <Instagram className="w-6 h-6 md:w-8 md:h-8 mb-2 opacity-50" />
-                        Превью шаблона
-                      </span>
-                      <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                  <CardContent className="p-4 md:p-6 flex flex-col items-center bg-gray-50/50 flex-1 rounded-b-xl">
+                    {/* POSTER ELEMENT (This exact div gets converted to Image) */}
+                    <div
+                      ref={posterRef}
+                      className="relative w-full max-w-[320px] aspect-[3/4] bg-slate-900 rounded-xl overflow-hidden shadow-2xl flex flex-col border border-slate-800"
+                    >
+                      {/* Background Image with elegant overlay */}
+                      <div
+                        className="absolute inset-0 bg-cover bg-center opacity-40"
+                        style={{
+                          backgroundImage:
+                            "url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1000&auto=format&fit=crop')",
+                        }}
+                      ></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/80 to-transparent"></div>
+
+                      {/* Poster Content */}
+                      <div className="relative z-10 flex flex-col h-full p-6 text-center">
+                        <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight mt-6">
+                          Eventomir
+                        </h2>
+                        <p className="text-emerald-400 font-bold text-[10px] tracking-[0.2em] uppercase mt-2">
+                          Платформа для артистов
+                        </p>
+
+                        <div className="mt-auto mb-8 space-y-4 text-left px-2">
+                          <p className="text-white text-xl font-bold leading-tight">
+                            Получайте больше заказов на свои выступления
+                          </p>
+                          <ul className="text-slate-300 text-sm space-y-2 font-medium">
+                            <li className="flex items-center gap-2">
+                              <span className="text-emerald-400">✓</span>{" "}
+                              Гарантированная оплата
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="text-emerald-400">✓</span>{" "}
+                              Удобный календарь
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="text-emerald-400">✓</span> Прямая
+                              связь с клиентами
+                            </li>
+                          </ul>
+                        </div>
+
+                        {/* Dynamic QR Code Footer */}
+                        <div className="bg-white p-3.5 rounded-xl flex items-center justify-between shadow-xl mt-auto w-full">
+                          <div className="flex-shrink-0 bg-white p-1 rounded-lg">
+                            <QRCodeSVG
+                              value={referralLink}
+                              size={64}
+                              level="H"
+                              includeMargin={false}
+                              fgColor="#0f172a"
+                            />
+                          </div>
+                          <div className="text-left ml-3.5 flex-1">
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">
+                              Регистрация
+                            </p>
+                            <p className="text-sm text-slate-900 font-black leading-tight">
+                              Наведите камеру
+                              <br />
+                              на QR-код
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+
                     <Button
                       type="button"
-                      variant="outline"
-                      className="w-full font-medium h-11 md:h-12"
+                      className="w-full max-w-[320px] font-medium h-11 md:h-12 mt-6 shadow-md"
+                      onClick={handleDownloadPoster}
                     >
-                      <Download className="mr-2 h-4 w-4 md:h-5 md:w-5" />{" "}
-                      Скачать архив (ZIP)
+                      <Download className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                      Скачать постер (JPEG)
                     </Button>
                   </CardContent>
                 </Card>
 
-                <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-                  <CardHeader className="p-4 md:p-6">
-                    <CardTitle className="text-base md:text-lg">
-                      Брендбук и Логотипы
-                    </CardTitle>
-                    <CardDescription className="text-xs md:text-sm mt-1">
-                      Официальные материалы Eventomir для вашего сайта.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 md:p-6 pt-0 md:pt-0 flex-1 flex flex-col">
-                    <div className="flex-1 min-h-[160px] aspect-video bg-slate-900 rounded-xl flex items-center justify-center mb-4 md:mb-6 shadow-inner relative overflow-hidden group">
-                      <span className="text-white font-extrabold text-2xl md:text-3xl tracking-widest z-10 drop-shadow-md">
-                        Eventomir
-                      </span>
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full font-medium h-11 md:h-12 mt-auto"
-                    >
-                      <Download className="mr-2 h-4 w-4 md:h-5 md:w-5" />{" "}
-                      Логотипы (SVG/PNG)
-                    </Button>
-                  </CardContent>
-                </Card>
+                {/* Brand Assets & IG Templates */}
+                <div className="flex flex-col gap-5 md:gap-6">
+                  <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <CardHeader className="p-4 md:p-6">
+                      <CardTitle className="text-base md:text-lg">
+                        Креативы для Stories (VK / IG)
+                      </CardTitle>
+                      <CardDescription className="text-xs md:text-sm mt-1">
+                        Специально подготовленные форматы 9:16.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 md:p-6 pt-0 md:pt-0 flex flex-col md:flex-row gap-4 items-center">
+                      <div className="w-24 aspect-[9/16] shrink-0 bg-slate-100 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-300 relative overflow-hidden group">
+                        <Instagram className="w-6 h-6 text-slate-400 opacity-50" />
+                      </div>
+                      <div className="flex-1 w-full flex flex-col justify-center">
+                        <p className="text-sm text-slate-600 mb-3 text-center md:text-left">
+                          Архив содержит 5 анимированных шаблонов для
+                          привлечения исполнителей в ваши социальные сети.
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full font-medium h-11"
+                        >
+                          <Download className="mr-2 h-4 w-4" /> Скачать архив
+                          (ZIP)
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow flex-1 flex flex-col">
+                    <CardHeader className="p-4 md:p-6">
+                      <CardTitle className="text-base md:text-lg">
+                        Брендбук и Логотипы
+                      </CardTitle>
+                      <CardDescription className="text-xs md:text-sm mt-1">
+                        Официальные материалы Eventomir для вашего сайта.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 md:p-6 pt-0 md:pt-0 flex-1 flex flex-col">
+                      <div className="flex-1 min-h-[120px] bg-slate-900 rounded-xl flex items-center justify-center mb-4 shadow-inner">
+                        <span className="text-white font-extrabold text-2xl tracking-widest drop-shadow-md">
+                          Eventomir
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full font-medium h-11 mt-auto"
+                      >
+                        <Download className="mr-2 h-4 w-4" /> Логотипы (SVG/PNG)
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
