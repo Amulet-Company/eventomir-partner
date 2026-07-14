@@ -15,15 +15,15 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          timeout: 20m # Increased timeout for Next.js builds
+          timeout: 20m
           script_stop: true
-          debug: true # Enable debug mode to see SSH connection details
+          debug: true
           script: |
-            set -e  # Exit on any error
+            set -e
 
-            # Load NVM/Node into the non-interactive SSH session
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || { echo "NVM not found"; exit 1; }
+            # Load NVM from the correct location
+            export NVM_DIR="/usr/local/nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || { echo "NVM not found at $NVM_DIR"; exit 1; }
 
             # Verify Node is available
             echo "Node version: $(node -v)"
@@ -37,10 +37,10 @@ jobs:
             git reset --hard origin/main
 
             # Clean install and build
-            npm ci  # Use npm ci instead of npm install for better reproducibility
+            npm ci
             npm run build
 
-            # Restart PM2 process (ensure PM2 is initialized)
-            pm2 list  # Check PM2 status
-            pm2 reload partner || pm2 start partner  # Reload if exists, start if doesn't
-            pm2 save  # Save PM2 process list
+            # Restart PM2 process
+            pm2 list
+            pm2 reload partner || pm2 start partner
+            pm2 save
