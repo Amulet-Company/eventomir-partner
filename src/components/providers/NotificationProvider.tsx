@@ -38,7 +38,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
-  // 🚨 FIX: Keep stable references to router and toast so the socket listener doesn't tear down
   const routerRef = useRef(router);
   const toastRef = useRef(toast);
 
@@ -47,7 +46,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     toastRef.current = toast;
   }, [router, toast]);
 
-  // --- Audio Helper ---
   const playNotificationSound = useCallback(() => {
     try {
       const audio = new Audio("/sounds/notification.wav");
@@ -57,10 +55,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     }
   }, []);
 
-  // --- 1. Fetch Initial Notification History from Database ---
   useEffect(() => {
     const fetchNotifications = async () => {
-      // 🚨 FIX: Do not fetch until the user is definitively authenticated
       if (status !== "authenticated") return;
 
       try {
@@ -79,9 +75,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     };
 
     fetchNotifications();
-  }, [status]); // 🚨 FIX: Re-run when auth status changes
+  }, [status]);
 
-  // --- 2. Real-Time Socket Listeners ---
   useEffect(() => {
     if (!socket) return;
 
@@ -89,7 +84,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       console.log("🔔 Received Notification:", payload);
 
       const type = payload.type || "SYSTEM";
-      const data = payload.data || {};
+
+      // 🚨 FIX: Safely parse data if the backend stringified it
+      let data = payload.data || {};
+      if (typeof data === "string") {
+        try {
+          data = JSON.parse(data);
+        } catch (e) {}
+      }
 
       const title = payload.title || data.title || "Уведомление";
       const message = payload.message || payload.body || "Новое сообщение";
@@ -97,12 +99,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       const notifTime = payload.createdAt
         ? new Date(payload.createdAt).getTime()
         : Date.now();
-      const isOldMessage = Date.now() - notifTime > 10000;
+
+      // 🚨 FIX: Use Math.abs and increase to 60s to prevent Server/Client clock skew from muting toasts
+      const isOldMessage = Math.abs(Date.now() - notifTime) > 60000;
 
       if (type === "CHAT_MESSAGE") {
         const chatItem: NotificationItem = {
           id: payload.id || crypto.randomUUID(),
           type: "CHAT_MESSAGE",
+          title: title, // Added title mapping safely
           message: message || `Новое сообщение от ${data?.senderName}`,
           isRead: false,
           createdAt: payload.createdAt || new Date().toISOString(),
@@ -115,10 +120,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
         };
 
         setNotifications((prev) => [chatItem, ...prev]);
+        setUnreadCount((prev) => prev + 1);
       } else {
         const genericItem: NotificationItem = {
           id: payload.id || crypto.randomUUID(),
           type: type,
+          title: title, // 🚨 FIX: Store the title so the UI can render it
           message: message,
           isRead: false,
           createdAt: payload.createdAt || new Date().toISOString(),
@@ -132,14 +139,23 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
           playNotificationSound();
 
           let variant: "default" | "success" | "destructive" = "default";
-          if (type === "BOOKING_ACCEPTED" || type === "SUCCESS")
+
+          // 🚨 FIX: Trigger the green success variant for new referrals
+          if (
+            type === "BOOKING_ACCEPTED" ||
+            type === "SUCCESS" ||
+            type === "REFERRAL_UPDATE"
+          ) {
             variant = "success";
+          }
+
           if (
             type === "BOOKING_REJECTED" ||
             type === "BOOKING_CANCELLED" ||
             type === "FAILED"
-          )
+          ) {
             variant = "destructive";
+          }
 
           toastRef.current({
             variant: variant,
@@ -160,6 +176,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       handleNotification({
         type: "CHAT_MESSAGE",
         id: crypto.randomUUID(),
+        title: "Новое сообщение",
         message: `Сообщение от ${payload.senderName}`,
         createdAt: new Date().toISOString(),
         data: {

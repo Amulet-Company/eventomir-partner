@@ -6,8 +6,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { QRCodeSVG } from "qrcode.react";
 import html2canvas from "html2canvas";
+
 import * as z from "zod";
 import {
+  Video,
+  Mic2,
+  Music,
+  ChefHat,
+  Palette,
   Copy,
   Loader2,
   Save,
@@ -28,6 +34,7 @@ import {
   Send,
   Music2,
   CheckCircle2,
+  CheckIcon,
 } from "lucide-react";
 
 import {
@@ -247,6 +254,9 @@ export default function PartnerProfilePage() {
         scale: 3, // High resolution for printing
         useCORS: true, // Allows loading external background images from Unsplash
         backgroundColor: "#0f172a", // Matches slate-900 fallback
+        windowWidth: document.documentElement.offsetWidth,
+        windowHeight: document.documentElement.offsetHeight,
+        logging: false, // Disable logging for cleaner console
       });
 
       const image = canvas.toDataURL("image/jpeg", 0.9);
@@ -257,6 +267,7 @@ export default function PartnerProfilePage() {
 
       toast({
         title: "Успешно",
+        variant: "success",
         description: "Постер начал скачиваться.",
       });
     } catch (error) {
@@ -316,7 +327,6 @@ export default function PartnerProfilePage() {
   // --- MAIN FORM SUBMIT ---
   const onSubmit = (data: ProfileFormValues) => {
     if (!userId) return;
-
     updateMutation.mutate(
       { userId, data },
       {
@@ -1047,72 +1057,127 @@ export default function PartnerProfilePage() {
                       в PDF. QR-код уже содержит вашу уникальную ссылку.
                     </CardDescription>
                   </CardHeader>
-
-                  <CardContent className="p-4 md:p-6 flex flex-col items-center bg-gray-50/50 flex-1 rounded-b-xl">
-                    {/* POSTER ELEMENT (This exact div gets converted to Image) */}
+                  <CardContent className="p-4 md:p-6 flex flex-col items-center bg-slate-50/50 flex-1 rounded-b-xl">
+                    {/* POSTER ELEMENT */}
                     <div
                       ref={posterRef}
-                      className="relative w-full max-w-[320px] aspect-[3/4] bg-slate-900 rounded-xl overflow-hidden shadow-2xl flex flex-col border border-slate-800"
+                      style={{
+                        // This forces the browser to ignore sub-pixel anti-aliasing during capture
+                        fontSmooth: "always",
+                        WebkitFontSmoothing: "antialiased",
+                        // This prevents text from jumping when the canvas renders
+                        textRendering: "optimizeLegibility",
+                      }}
+                      // 🚨 FIX: Replaced aspect ratio with explicitly safe h-[480px] so it NEVER overflows and clips
+                      className="relative w-full max-w-[320px] h-[480px] mx-auto bg-slate-950 rounded-2xl overflow-hidden shadow-2xl flex flex-col ring-1 ring-slate-900/5"
                     >
-                      {/* Background Image with elegant overlay */}
-                      <div
-                        className="absolute inset-0 bg-cover bg-center opacity-40"
-                        style={{
-                          backgroundImage:
-                            "url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1000&auto=format&fit=crop')",
-                        }}
-                      ></div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/80 to-transparent"></div>
+                      {/* WhatsApp-style Artist Doodle Texture */}
+                      <div className="absolute inset-0 overflow-hidden bg-slate-950 flex flex-wrap justify-center items-center gap-5 p-2 opacity-[0.12] pointer-events-none">
+                        {Array.from({ length: 45 }).map((_, i) => {
+                          const icons = [
+                            Camera,
+                            Video,
+                            Mic2,
+                            Music,
+                            ChefHat,
+                            Palette,
+                          ];
+                          const Icon = icons[i % icons.length];
+                          const rotate =
+                            i % 2 === 0 ? "rotate-[-15deg]" : "rotate-[15deg]";
+                          const size = i % 3 === 0 ? "w-5 h-5" : "w-7 h-7";
+
+                          return (
+                            <Icon
+                              key={i}
+                              className={`${size} ${rotate} text-primary`}
+                            />
+                          );
+                        })}
+                      </div>
+
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-950/40 to-slate-950/95"></div>
 
                       {/* Poster Content */}
-                      <div className="relative z-10 flex flex-col h-full p-6 text-center">
-                        <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight mt-6">
-                          Eventomir
-                        </h2>
-                        <p className="text-emerald-400 font-bold text-[10px] tracking-[0.2em] uppercase mt-2">
-                          Платформа для артистов
-                        </p>
+                      <div className="relative z-10 flex flex-col h-full">
+                        {/* Header / Brand */}
+                        <div className="pt-8 pb-2 text-center shrink-0">
+                          <h2 className="text-3xl font-black text-white tracking-[0.1em] uppercase drop-shadow-lg">
+                            Eventomir
+                          </h2>
+                          <div className="flex items-center justify-center gap-2 mt-1.5">
+                            <div className="h-[1px] w-8 bg-primary/50"></div>
+                            <p className="text-primary font-bold text-[10px] tracking-[0.3em] uppercase drop-shadow-sm">
+                              Для профессионалов
+                            </p>
+                            <div className="h-[1px] w-8 bg-primary/50"></div>
+                          </div>
+                        </div>
 
-                        <div className="mt-auto mb-8 space-y-4 text-left px-2">
-                          <p className="text-white text-xl font-bold leading-tight">
-                            Получайте больше заказов на свои выступления
-                          </p>
-                          <ul className="text-slate-300 text-sm space-y-2 font-medium">
-                            <li className="flex items-center gap-2">
-                              <span className="text-emerald-400">✓</span>{" "}
-                              Гарантированная оплата
-                            </li>
-                            <li className="flex items-center gap-2">
-                              <span className="text-emerald-400">✓</span>{" "}
-                              Удобный календарь
-                            </li>
-                            <li className="flex items-center gap-2">
-                              <span className="text-emerald-400">✓</span> Прямая
-                              связь с клиентами
-                            </li>
+                        {/* Main Pitch & Features */}
+                        <div className="flex-1 flex flex-col justify-center px-6 shrink-0 my-2">
+                          <h3 className="text-white text-[20px] leading-tight font-bold mb-6 text-center drop-shadow-md">
+                            Творите. Выступайте.
+                            <br />
+                            <span className="text-primary">Зарабатывайте.</span>
+                          </h3>
+
+                          <ul className="space-y-3 w-full">
+                            {[
+                              "Прямая связь с заказчиками",
+                              "Гарантированная оплата",
+                              "Календарь событий",
+                            ].map((text, i) => (
+                              <li
+                                key={i}
+                                // Use grid to strictly define the icon area and text area
+                                className="grid grid-cols-[30px_1fr] items-center bg-slate-900/80 p-2.5 rounded-lg border border-primary/20 shadow-sm"
+                              >
+                                {/* Icon Area - Exactly 30px wide */}
+                                <div className="flex justify-center items-center">
+                                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
+                                    <CheckIcon className="text-primary w-3 h-3" />
+                                  </div>
+                                </div>
+
+                                {/* Text Area - No flex, no line-height tricks */}
+                                <div className="flex items-center">
+                                  <span className="text-slate-100 text-[13px] font-medium leading-tight">
+                                    {text}
+                                  </span>
+                                </div>
+                              </li>
+                            ))}
                           </ul>
                         </div>
 
-                        {/* Dynamic QR Code Footer */}
-                        <div className="bg-white p-3.5 rounded-xl flex items-center justify-between shadow-xl mt-auto w-full">
-                          <div className="flex-shrink-0 bg-white p-1 rounded-lg">
-                            <QRCodeSVG
-                              value={referralLink}
-                              size={64}
-                              level="H"
-                              includeMargin={false}
-                              fgColor="#0f172a"
-                            />
-                          </div>
-                          <div className="text-left ml-3.5 flex-1">
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">
-                              Регистрация
-                            </p>
-                            <p className="text-sm text-slate-900 font-black leading-tight">
-                              Наведите камеру
-                              <br />
-                              на QR-код
-                            </p>
+                        {/* 🚨 THE FOOTER: Redesigned safely for html2canvas compatibility */}
+                        <div className="p-4 shrink-0 w-full bg-slate-950/60 backdrop-blur-md border-t border-white/5">
+                          <div className="bg-white rounded-xl p-3 shadow-lg relative flex items-center gap-4">
+                            {/* Premium Accent Line */}
+                            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary rounded-l-xl"></div>
+
+                            {/* QR Code */}
+                            <div className="flex-shrink-0 pl-2">
+                              <QRCodeSVG
+                                value={referralLink}
+                                size={56}
+                                level="H"
+                                includeMargin={false}
+                                fgColor="#0f172a"
+                              />
+                            </div>
+
+                            {/* Call to action */}
+                            <div className="flex flex-col justify-center flex-1 min-w-0 pr-1">
+                              <p className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1 truncate">
+                                Регистрация
+                              </p>
+                              <p className="text-[14px] text-slate-900 font-black leading-tight whitespace-nowrap">
+                                Наведите камеру
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1120,7 +1185,7 @@ export default function PartnerProfilePage() {
 
                     <Button
                       type="button"
-                      className="w-full max-w-[320px] font-medium h-11 md:h-12 mt-6 shadow-md"
+                      className="w-full max-w-[320px] font-medium h-11 md:h-12 mt-6 shadow-md bg-slate-900 hover:bg-slate-800 text-white transition-all hover:shadow-lg"
                       onClick={handleDownloadPoster}
                     >
                       <Download className="mr-2 h-4 w-4 md:h-5 md:w-5" />

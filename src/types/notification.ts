@@ -1,7 +1,7 @@
 // Common fields for all notifications
 export interface BaseNotification {
   id: string;
-  title?: string; // 🚨 FIX: Added title to the base type
+  title?: string;
   message?: string;
   isRead?: boolean;
   createdAt: string | Date;
@@ -15,7 +15,7 @@ export interface ChatMessagePayload extends BaseNotification {
     senderName: string;
     preview: string;
     url?: string;
-    [key: string]: any; // 🚨 FIX: Allow other data fields safely
+    [key: string]: any;
   };
 }
 
@@ -31,13 +31,13 @@ export interface BookingPayload extends BaseNotification {
     customerId?: string;
     status?: string;
     url?: string;
-    [key: string]: any; // 🚨 FIX: Allow other data fields safely
+    [key: string]: any;
   };
 }
 
 // Generic System Notification
 export interface SystemPayload extends BaseNotification {
-  type: "SYSTEM" | string;
+  type: "SYSTEM" | "REFERRAL_UPDATE" | string;
   data?: Record<string, any> & { url?: string };
 }
 

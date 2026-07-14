@@ -65,7 +65,7 @@ export default function ClientHeader() {
                 href="/notifications"
                 className={`relative flex items-center justify-center h-10 w-10 rounded-full transition-all hover:scale-105 active:scale-95 ${
                   useTransparentStyle
-                    ? "bg-primary/10 hover:bg-primary/20 text-primary" // 🚨 Adjusted for light background
+                    ? "bg-primary/10 hover:bg-primary/20 text-primary"
                     : "bg-primary/10 hover:bg-primary/20 text-primary"
                 }`}
               >
@@ -81,7 +81,7 @@ export default function ClientHeader() {
                 href="/chat"
                 className={`relative flex items-center justify-center h-10 w-10 rounded-full transition-all hover:scale-105 active:scale-95 ${
                   useTransparentStyle
-                    ? "bg-primary/10 hover:bg-primary/20 text-primary" // 🚨 Adjusted for light background
+                    ? "bg-primary/10 hover:bg-primary/20 text-primary"
                     : "bg-primary/10 hover:bg-primary/20 text-primary"
                 }`}
               >
