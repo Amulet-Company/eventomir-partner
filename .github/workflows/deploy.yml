@@ -18,9 +18,6 @@ jobs:
           timeout: 20m # Increased timeout for Next.js builds
           script_stop: true
           debug: true # Enable debug mode to see SSH connection details
-          timeout: 20m # Increased timeout for Next.js builds
-          script_stop: true
-          debug: true # Enable debug mode to see SSH connection details
           script: |
             set -e  # Exit on any error
 
